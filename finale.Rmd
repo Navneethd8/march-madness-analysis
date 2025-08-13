@@ -1,0 +1,558 @@
+---
+title: "Regular Season vs. March Madness: An Investigation into Men's College Basketball"
+author: "Navneeth Dhamotharan, Gavin Ginn, Tyler Luong, Ruiming Ren"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r , include = FALSE}
+library(tidyverse)
+MNCAATourneyDetailedResults <- read_delim("~/Desktop/march-machine-learning-mania-2024/MNCAATourneyDetailedResults.csv")
+MRegularSeasonDetailedResults <- read_delim("~/Desktop/march-machine-learning-mania-2024/MRegularSeasonDetailedResults.csv")
+MTeams <- read_delim("~/Desktop/march-machine-learning-mania-2024/MTeams.csv")
+```
+
+
+### Abstract
+
+This study examines data trends between NCAA teams’ regular season performance and their March Madness outcomes, focusing on winning percentages, score distributions, and free throw accuracy. Analyzing historical tournament data, we identify a positive correlation between regular season success and March Madness performance, where teams with higher winning percentages tend to advance further. Score distributions between the regular season and tournament games remain consistent, exhibiting a right-skewed pattern with no significant differences in scoring margins. Additionally, teams with higher free throw percentages demonstrate an increased likelihood of winning NCAA tournament games compared to the regular season. These findings suggest that while regular season success is a strong predictor of tournament performance, other factors likely contribute to March Madness outcomes. This analysis provides a data-driven perspective on how teams translate regular season success into postseason performance, offering valuable insights for analysts, coaches, and basketball enthusiasts.
+
+### Introduction
+
+In recent years, March Madness has captured the hearts of basketball fans, sports writers, and anyone who enjoys a good underdog story. Even after a long regular season where teams develop their style of play and build their confidence, the NCAA tournament never fails to surprise. We have seen teams with stellar records falter under pressure, while lesser-known squads rise to the occasion and capture our imagination. This intriguing unpredictability prompts us to ask whether a strong regular season really prepares a team for the rollercoaster ride of March Madness and if key statistics like free throw accuracy or winning percentage can reveal hidden insights into postseason success. There is a genuine sense of excitement in trying to uncover the secrets behind those unforgettable moments that make the tournament so magical and endearing to millions.
+
+Historical trends show that teams with strong regular season records often shine in March Madness, yet the tournament remains a realm of unexpected twists. Factors such as team spirit, coaching ingenuity, and the emotional highs and lows of single-elimination play all contribute to the magic of the event. Free throw shooting, for example, has been celebrated as a potential game changer in nail-biting finishes. While many believe that consistent free throw performance is a cornerstone of success, there is still lively debate about its true impact in the heat of the tournament compared to the regular season. This discussion resonates deeply with fans and experts alike, as it touches on both the statistical analysis and the human drama inherent in competitive sports.
+
+To explore these fascinating questions, our research delves into historical NCAA tournament data to identify patterns in team performance, scoring margins, and free throw efficiency. By examining how regular season achievements translate into the unpredictable energy of March Madness, we aim to provide insights that not only spark discussion among coaches and analysts but also deepen the appreciation of fans for the beautiful, unexpected game of basketball. Our approach embraces both numbers and narratives, blending rigorous analysis with the passion that defines the sport. This study invites everyone to reconsider what it means to be a true champion, appreciating the full spectrum of factors that contribute to success on the grandest stage.
+
+The questions that we aim to answer in this project are:
+
+  - What are the data trends between a team’s regular season performance and March Madness outcome?
+  
+  - How does the score between the winning team and losing team compare to each other between regular season and March Madness?
+  
+  - Do teams with a higher winning percentage in the regular season tend to perform better in March Madness? 
+
+  - Do teams with higher free throw percentages tend to win more games in the NCAA tournament compared to the regular season?
+  
+  
+As the season unfolds, there is a quiet but persistent curiosity among basketball enthusiasts about how regular season performance translates to the unpredictable world of March Madness. Our analysis gently peels back the layers of this mystery by exploring subtle differences between the steady rhythm of regular season play and the explosive energy of the tournament. For the passionate viewer, our work provides a thoughtful glimpse into what may lie ahead—offering hints about scoring trends, team dynamics, and even the sometimes overlooked impact of free throw efficiency. It invites fans to see beyond the surface, transforming game-day statistics into a richer narrative that makes each matchup feel more intimate and meaningful. In essence, our findings create a framework that helps bridge the gap between raw data and the palpable excitement experienced when the underdogs rise and champions emerge, enriching the viewing experience with informed anticipation and a deeper connection to the sport.
+
+For stakeholders such as coaches, analysts, and team managers, our report serves as a subtle guide for understanding competitive performance in a new light. Rather than merely presenting figures, it invites decision-makers to reflect on how their teams measure up against a broader backdrop of tournament trends and average performances. In doing so, it offers not just a numerical assessment but also a narrative that captures the emotional highs and strategic intricacies of college basketball. By providing context and clarity on aspects like scoring distributions and free throw accuracy, our work allows these stakeholders to identify potential strengths and areas for improvement. Ultimately, the broader value of our report lies in its ability to elevate conversations around team performance, encouraging a more nuanced appreciation of what it really takes to succeed when the stakes are highest.
+
+
+### About our Data
+
+In this analysis, we explore the relationship between the regular season and the march madness tournament through factors such as winning percentage, free throw points and how they affect performance. in NCAA men's basketball. By utilizing datasets that we found on Kaggle, we aim to explore the trends for each regular and march madness game from 2003 to 2023.
+
+The three datasets that we used were "MRegularSeasonDetailedResults", "MNCAATourneyDetailedResults" and "MTeams" all from kaggle. We chose these datasets as it aligned with our goals of comparing both the regular as well as march madness parts of the Men's basketball season across 2003 - 2023. We wanted to depict the differences between the regular and the tournament season which our final combined dataset can show. All of this data was assembled by Kaggle with the help of Kenneth Massey and Sonas Consulting that specializing in database consulting.
+
+The data we use is free for everyone, although you would need a kaggle account to get the exact datasets which is free to make.
+Our first dataset shows every regular season game from 2003 to 2023 along with the winning team, losing team, its scores as well as other metrics such as free throws for both the winning and losing team.The second dataset follows the exact same format, but for the March Madness part of the season. Our last dataset depcits the team name associated with a team ID that is present in the previous two datasets. That way we can use the ID to find the names of teams which would be helpful in presenting our data to our audience of college basketball fans.
+
+Here's some more facts about our datasets.
+
+```{r}
+RegularRows <- nrow(MRegularSeasonDetailedResults)
+TourneyRows <- nrow(MNCAATourneyDetailedResults)
+TeamRows <- nrow(MTeams)
+RegularColumns <- ncol(MRegularSeasonDetailedResults)
+TourneyColumns <- ncol(MNCAATourneyDetailedResults)
+TeamColumns <- ncol(MTeams)
+
+cat("There are",RegularRows,"rows and",RegularColumns,"columns in the regular season dataset.\n", sep = " ")
+cat("There are",RegularRows,"rows and",TourneyColumns,"columns in the regular season dataset.\n", sep = " ")
+cat("There are",TeamRows,"rows and",TeamColumns,"columns in the teams dataset.\n", sep = " ")
+```
+
+
+Since we removed any inmplausible or NA values as an when we processed the data, our final data used for arriving at results does not have any quality issues.
+
+### Methods
+
+#### 1. Calculating General Trends between the regular season and march madness
+
+```{r,include = FALSE}
+# Gavin's Processing
+
+## Calculating Number of Wins in the Regular Season
+rs_W_grouped_data <- MRegularSeasonDetailedResults %>%
+  group_by(WTeamID) %>%
+  summarise(
+    count = n(),  
+  )
+
+## Calculating Number of Losses in the Regular Season
+
+rs_L_grouped_data <- MRegularSeasonDetailedResults %>%
+  group_by(LTeamID) %>%
+  summarise(
+    count = n(),  
+  )
+
+## Merging the above two datasets
+
+rs_merged <- merge(rs_W_grouped_data, rs_L_grouped_data, 
+                     by.x = "WTeamID", by.y = "LTeamID", 
+                     suffixes = c("_W", "_L"))
+
+mm_W_grouped_data <- MNCAATourneyDetailedResults %>%
+  group_by(WTeamID) %>%
+  summarise(
+    count = n(),  
+  )
+
+## Calculating Number of Wins in the Tournament
+
+rs_mm <- merge(rs_merged, mm_W_grouped_data, 
+                              by = "WTeamID",
+                              all.x = TRUE)
+
+## Calculation the Win ratio in the tournament
+
+rs_mm_revised <- rs_mm %>%
+  rename(Team_ID = WTeamID) %>% 
+  rename(March_Madness_Games_Won = count) %>% 
+  mutate(rs_win_ratio = count_W / (count_W + count_L)) %>% 
+  select(Team_ID,rs_win_ratio,March_Madness_Games_Won)
+
+
+filtered_data <- rs_mm_revised %>%
+  filter(March_Madness_Games_Won >= 5) %>% 
+  arrange(desc(March_Madness_Games_Won))
+
+
+
+```
+
+
+Using regular season data from 2003 to 2023, the analysis began by grouping the dataset by each winning team's ID number to determine their total number of regular season wins. This was accomplished by counting the number of times a team's ID appeared under the “winning team ID” column, representing the number of games that team had won. A similar approach was applied to the losing team ID column to extract the total number of losses each team had accumulated.
+
+After obtaining these counts, the two datasets were merged to create a comprehensive view of each team’s regular season performance, displaying both win and loss totals. The same grouping method was then employed to extract each team’s total number of victories in the NCAA March Madness tournament.
+
+With these figures established, a win ratio for the regular season was calculated using the formula:
+
+WinRatio = Regular Season Wins /  (Regular Season Wins + Regular Season Losses)
+
+To streamline the dataset for analysis, a new, filtered data frame was created, containing only the essential columns: TeamID, regular season win ratio, and total March Madness wins. Teams were then ranked based on the number of March Madness games won. To prevent skewed results, any team that had won fewer than five tournament games was excluded from the dataset.
+
+Using the refined data, a scatter plot was generated to visualize the relationship between a team’s regular season win ratio and its success in March Madness. A trend line was included in the visualization, revealing a moderate positive correlation between the two variables.
+
+One of the main challenges encountered during this process was managing the large volume of data, requiring efficient handling and organization to ensure accurate calculations and meaningful insights.
+
+
+#### 2. Score differences: Regular Season vs March Madness 
+
+To address the second question, the analysis focused on columns related to the scores of both the winning and losing teams, as well as the point differential for each game. The primary goal was to examine how the margin of victory varied across different datasets.
+
+To calculate the point difference for each game, a new column was created using the mutate function, which subtracted the losing team’s score from the winning team’s score. This calculation was performed separately for both the regular season and the NCAA March Madness (MNCAA) datasets, as both were of interest in the analysis.
+
+Once the point differentials were determined for each dataset, the two datasets were merged into a single dataset to facilitate an overarching comparison of winning and losing scores across both regular season and tournament games. While this combined dataset was primarily used for a specific insight, most of the analysis was conducted separately for the two datasets to maintain the integrity of their distinct contexts.
+
+To summarize the key trends, mean and median values were used to provide a clearer understanding of score distributions and point differentials. These statistical measures ensured that any findings were based on central tendencies rather than being skewed by outliers. Any missing values were excluded from the final analysis to prevent inaccuracies in the results.
+
+The key variables relevant to answering this research question were the winning team’s score and the losing team’s score from each dataset. The specific steps taken in the analysis involved generating graphs and numerical summaries to identify any notable patterns or significant insights. The initial part of the analysis, which focused on overall score differentials between the regular season and March Madness games, did not yield a particularly striking finding—there was only a slight variation in point differentials between seasons, even when different methods of interpretation were applied. However, in the second part of the analysis, a more meaningful finding emerged, which was effectively visualized through graphical representation.
+
+One of the main challenges encountered was the difficulty of making a direct comparison between the regular season and March Madness datasets. While both shared similar column structures, the regular season dataset contained significantly more data than the March Madness dataset. This discrepancy required careful consideration to ensure that comparisons were meaningful and that the differing sample sizes did not lead to misleading conclusions.
+
+
+```{r , include=FALSE}
+
+# Tyler's Analysis
+
+MNCAA <- read_delim("~/Desktop/march-machine-learning-mania-2024/MNCAATourneyDetailedResults.csv")
+regular <- read_delim("~/Desktop/march-machine-learning-mania-2024/MRegularSeasonDetailedResults.csv")
+
+#Get the score difference in the games
+MNCAA <- MNCAA %>%
+  mutate(ScoreDifference = WScore - LScore)
+regular <- regular %>%
+  mutate(ScoreDifference = WScore - LScore)
+
+#Merged dataset
+merged <- bind_rows(MNCAA, regular)
+
+#Summarize score average/difference
+summary_stats <- MNCAA %>%
+  summarize(
+    AverageWinningScore = mean(WScore),
+    AverageLosingScore = mean(LScore),
+    AverageScoreDifference = mean(ScoreDifference),
+    MedianScoreDifference = median(ScoreDifference),
+    TotalGames = n()
+  )
+print(summary_stats)
+
+summary_stats2 <- regular %>%
+  summarize(
+    AverageWinningScore = mean(WScore),
+    AverageLosingScore = mean(LScore),
+    AverageScoreDifference = mean(ScoreDifference),
+    MedianScoreDifference = median(ScoreDifference),
+    TotalGames = n()
+  )
+print(summary_stats2)
+
+summary_stats3 <- merged %>%
+  summarize(
+    AverageWinningScore = mean(WScore),
+    AverageLosingScore = mean(LScore),
+    AverageScoreDifference = mean(ScoreDifference),
+    MedianScoreDifference = median(ScoreDifference),
+    TotalGames = n()
+  )
+print(summary_stats3)
+
+#Averaging the scores
+average_scores <- data.frame(
+  Team = c("Win", "Lose"),
+  AverageScore = c(mean(MNCAA$WScore), mean(MNCAA$LScore))
+)
+
+
+
+```
+
+#### 3. Regular Season vs. March Madness Win Percentage
+
+The data cleaning process began with an initial assessment of missing values, revealing a significant number of NA entries. To retain as much valuable information as possible, these missing values were preemptively replaced with zeros rather than being removed. This approach ensured that data points remained intact for further analysis rather than being discarded due to incomplete records.
+
+Two key variables were central to the analysis: WinPercentage, representing a team's regular season win rate, and TourneyWinPercentage, reflecting a team’s success in the NCAA March Madness tournament. These variables were critical in addressing the research question, as they allowed for direct comparisons between regular-season performance and tournament outcomes.
+
+The data processing workflow involved multiple steps. First, datasets were merged to create a comprehensive view of team performance across both the regular season and March Madness. Following this, missing values were handled, ensuring that incomplete data did not skew the results. Once the data was cleaned and structured, WinPercentage and TourneyWinPercentage were calculated to quantify each team's success.
+
+To analyze the relationship between regular season performance and March Madness outcomes, a linear regression analysis was conducted. This statistical approach helped determine the correlation between regular season win percentages and tournament success, allowing for a clearer understanding of trends and predictive patterns. The regression model provided insights into how strongly a team's regular season performance correlated with its likelihood of success in the tournament.
+
+One of the main challenges encountered during the analysis was the presence of teams that had not participated in March Madness. These teams had a TourneyWinPercentage of zero, which, while accurate, introduced complexities in interpretation. The presence of numerous zero entries required careful consideration, as they influenced the overall distribution of tournament success rates and could affect the regression model’s accuracy.
+
+Despite these challenges, the analysis effectively demonstrated trends in regular-season-to-tournament performance. The linear regression model helped quantify these associations, providing a predictive framework for assessing a team’s likelihood of success in March Madness based on its regular season win percentage.
+
+```{r , include = FALSE}
+# Ruiming's Analysis
+
+regular_season_data <- read_delim("~/Desktop/march-machine-learning-mania-2024/MRegularSeasonDetailedResults.csv")
+tourney_data <- read_delim("~/Desktop/march-machine-learning-mania-2024/MNCAATourneyDetailedResults.csv")
+teams_data <- read_delim("~/Desktop/march-machine-learning-mania-2024/MTeams.csv")
+
+## Calculate Regular Season Win Percentage
+
+wins <- regular_season_data %>%
+  group_by(Season, WTeamID) %>%
+  summarise(Wins = n(), .groups = "drop") %>%
+  rename(TeamID = WTeamID)
+losses <- regular_season_data %>%
+  group_by(Season, LTeamID) %>%
+  summarise(Losses = n(), .groups = "drop") %>%
+  rename(TeamID = LTeamID)
+team_records <- full_join(wins, losses, by = c("Season", "TeamID")) %>%
+  mutate(
+    Wins = ifelse(is.na(Wins), 0, Wins),
+    Losses = ifelse(is.na(Losses), 0, Losses),
+    TotalGames = Wins + Losses,
+    WinPercentage = Wins / TotalGames
+  )
+
+## Extract March Madness Performance Metrics
+tourney_wins <- tourney_data %>%
+  group_by(Season, WTeamID) %>%
+  summarise(TourneyWins = n(), .groups = "drop") %>%
+  rename(TeamID = WTeamID)
+tourney_losses <- tourney_data %>%
+  group_by(Season, LTeamID) %>%
+  summarise(TourneyLosses = n(), .groups = "drop") %>%
+  rename(TeamID = LTeamID)
+tourney_records <- full_join(tourney_wins, tourney_losses, by = c("Season", "TeamID")) %>%
+  mutate(
+    TourneyWins = ifelse(is.na(TourneyWins), 0, TourneyWins),
+    TourneyLosses = ifelse(is.na(TourneyLosses), 0, TourneyLosses),
+    TourneyGames = TourneyWins + TourneyLosses,
+    TourneyWinPercentage = ifelse(TourneyGames > 0, TourneyWins / TourneyGames, 0)
+  )
+team_performance <- left_join(team_records, tourney_records, by = c("Season", "TeamID")) %>%
+  mutate(
+    TourneyWins = ifelse(is.na(TourneyWins), 0, TourneyWins),
+    TourneyLosses = ifelse(is.na(TourneyLosses), 0, TourneyLosses),
+    TourneyGames = ifelse(is.na(TourneyGames), 0, TourneyGames),
+    TourneyWinPercentage = ifelse(TourneyGames > 0, TourneyWins / TourneyGames, 0),
+    WinPercentage = ifelse(is.na(WinPercentage), 0, WinPercentage)
+  )
+
+## Analyzing the Relationship Between Regular Season and March Madness Performance
+correlation <- cor(team_performance$WinPercentage, team_performance$TourneyWinPercentage, use = "complete.obs")
+cat("\nCorrelation between Regular Season Win Percentage and Tournament Win Percentage:", round(correlation, 3), "\n")
+model <- lm(TourneyWinPercentage ~ WinPercentage, data = team_performance)
+summary(model)
+team_performance_summary <- team_performance %>%
+  mutate(WinPercentage_Binned = round(WinPercentage, 2)) %>%
+  group_by(WinPercentage_Binned) %>%
+  summarise(AvgTourneyWinPercentage = mean(TourneyWinPercentage, na.rm = TRUE))
+
+
+
+```
+
+#### 4. Free Throw Percentages in Regular Season vs. March Madness
+
+This phase of our analysis began with filtering the dataset to extract only the necessary free throw statistics. Specifically, we selected the following variables for both the regular season and tournament datasets: Season, WTeamID, LTeamID, WFTM, WFTA, LFTM, and LFTA. These variables represent the number of free throws made and attempted by both the winning and losing teams in each game.
+
+Next, we integrated the Names dataset with both the regular season and tournament datasets. This step allowed us to cross-reference each team's unique ID with its corresponding name, ensuring consistency across different datasets.
+
+Following this, we calculated the free throw success rates for both the regular season and tournament games. To facilitate further analysis, we added a "Type" field to distinguish between regular season and tournament data. This enabled us to merge all relevant information into a single dataset later in the process.
+
+The merging process began by combining the free throw success rates for both winning and losing teams across the regular season and tournament games. We performed this merge based on team names, ensuring that each team's free throw performance was consolidated, regardless of whether they won or lost in a given game. This allowed us to compute overall free throw ratios for each team, covering both the regular season and March Madness tournaments.
+
+To handle missing values resulting from the merge, we replaced any NA (null) values with zero before proceeding with the final calculations. We then computed each team's free throw success rate for every season from 2003 to 2023, providing a comprehensive view of their performance over two decades.
+
+Finally, we merged the processed regular season and tournament datasets into a single dataset to facilitate visualization. This dataset served as the basis for generating our final graph, which illustrates free throw performance trends over time. Additionally, we calculated a weak positive correlation of approximately 0.25, indicating a slight relationship between free throw success rates and overall team performance.
+
+```{r , include = FALSE}
+# Navneeth's Processing
+
+## Selecting data to get only free throw data
+
+MRegularSeasonDetailedResults <- MRegularSeasonDetailedResults %>% select(Season,WTeamID,LTeamID,WFTM,WFTA,LFTM,LFTA) 
+MNCAATourneyDetailedResults <-  MNCAATourneyDetailedResults %>% select(Season,WTeamID,LTeamID,WFTM,WFTA,LFTM,LFTA)
+MTeams <- MTeams %>% select(TeamID,TeamName)
+
+## Merge to add winning team names for the regular season
+MRegularSeasonDetailedResults <- MRegularSeasonDetailedResults %>%
+  merge(MTeams, by.x = "WTeamID", by.y = "TeamID", all.x = TRUE) %>%
+  rename(WTeamName = TeamName)
+
+## Merge to add losing team names for the regular season
+MRegularSeasonDetailedResults <- MRegularSeasonDetailedResults %>%
+  merge(MTeams, by.x = "LTeamID", by.y = "TeamID", all.x = TRUE) %>%
+  rename(LTeamName = TeamName)
+
+## Calculate success rates for the regular season
+MRegularSeasonDetailedResults <- MRegularSeasonDetailedResults %>%
+  mutate(
+    wSuccess_rate = WFTM / WFTA,
+    lSuccess_rate = LFTM / LFTA
+  )
+
+
+## Merge to add winning team names for the tournament
+MNCAATourneyDetailedResults <- MNCAATourneyDetailedResults %>%
+  merge(MTeams, by.x = "WTeamID", by.y = "TeamID", all.x = TRUE) %>%
+  rename(WTeamName = TeamName)
+
+## Merge to add losing team names for the tournament
+MNCAATourneyDetailedResults <- MNCAATourneyDetailedResults %>%
+  merge(MTeams, by.x = "LTeamID", by.y = "TeamID", all.x = TRUE) %>%
+  rename(LTeamName = TeamName)
+
+## Calculate success rates for the tournament
+MNCAATourneyDetailedResults <- MNCAATourneyDetailedResults %>%
+  mutate(
+    wSuccess_rate = WFTM / WFTA,
+    lSuccess_rate = LFTM / LFTA
+  )
+
+## Adding type to both datasets
+
+MRegularSeasonDetailedResults$Season_type <- "Regular Season"
+MNCAATourneyDetailedResults$Season_type <- "Tournament"
+
+
+
+## Calculating Free throw success rates for the regular season
+
+regularWins <- MRegularSeasonDetailedResults %>% group_by(WTeamID ,WTeamName , Season ) %>% summarize(W_FTM = sum(WFTM), W_FTA = sum(WFTA)) %>% group_by(WTeamName) %>% summarize(WFTM = sum(W_FTM) , WFTA = sum(W_FTA)) 
+
+regularLoss <- MRegularSeasonDetailedResults %>% group_by(LTeamID ,LTeamName , Season ) %>% summarize(L_FTM = sum(LFTM), L_FTA = sum(LFTA)) %>% group_by(LTeamName) %>% summarize(LFTM = sum(L_FTM) , LFTA = sum(L_FTA)) 
+
+combined_regular <- merge(regularWins , regularLoss ,  by.x = "WTeamName"  , by.y = "LTeamName" , all=TRUE) %>% 
+  mutate(
+    WFTM = ifelse(is.na(WFTM),0,WFTM),
+    WFTA = ifelse(is.na(WFTA),0,WFTA),
+    LFTM = ifelse(is.na(LFTM),0,LFTM),
+    LFTA = ifelse(is.na(LFTA),0,LFTA),
+
+    ) %>% rename(TeamName = WTeamName)
+
+
+
+combined_regular <- combined_regular %>% group_by(TeamName) %>% summarize(FTM = WFTM + LFTM , FTA = WFTA + LFTA) %>% mutate( regular_ft_success_rate = FTM/FTA)
+
+## Calculating free throw success rates for the tournament season
+
+tourneyWins <- MNCAATourneyDetailedResults %>% group_by(WTeamID ,WTeamName , Season ) %>% summarize(W_FTM = sum(WFTM), W_FTA = sum(WFTA)) %>% group_by(WTeamName) %>% summarize(WFTM = sum(W_FTM) , WFTA = sum(W_FTA)) 
+
+tourneyLoss <- MNCAATourneyDetailedResults %>% group_by(LTeamID ,LTeamName , Season ) %>% summarize(L_FTM = sum(LFTM), L_FTA = sum(LFTA)) %>% group_by(LTeamName) %>% summarize(LFTM = sum(L_FTM) , LFTA = sum(L_FTA)) 
+
+combined_tourney <- merge(tourneyWins , tourneyLoss ,  by.x = "WTeamName"  , by.y = "LTeamName" , all=TRUE) %>% 
+  mutate(
+    WFTM = ifelse(is.na(WFTM),0,WFTM),
+    WFTA = ifelse(is.na(WFTA),0,WFTA),
+    LFTM = ifelse(is.na(LFTM),0,LFTM),
+    LFTA = ifelse(is.na(LFTA),0,LFTA),
+
+    ) %>% rename(TeamName = WTeamName)
+
+
+
+combined_tourney <- combined_tourney %>% group_by(TeamName) %>% summarize(FTM = WFTM + LFTM , FTA = WFTA + LFTA) %>% mutate( tourney_ft_success_rate = FTM/FTA)
+
+
+## Combining into a final dataset
+
+final <- merge(combined_tourney ,combined_regular,  by = "TeamName" , all=FALSE )
+
+
+## Calculating Correlation
+
+
+final %>% summarize(correlation = cor(regular_ft_success_rate,tourney_ft_success_rate))
+
+
+
+
+```
+
+
+### Results 
+
+The following figures depict our observation for all 4 phases of our reaserch.
+
+For the first phase of our research, we examined the relationship between regular season performance and success in March Madness. Our analysis revealed that teams with higher regular season win ratios tend to perform better in the tournament.
+
+A scatter plot of March Madness games won versus regular season win ratios from 2003 to 2023 shows a clear positive correlation. Teams that consistently win at least 70% of their regular season games are more likely to advance further in the tournament. A fitted linear regression line reinforces this trend, indicating that regular season success is a strong predictor of postseason performance.
+
+Notably, several teams stand out as top performers in March Madness. These include Kansas, Indiana, North Carolina, Duke, Kentucky, Michigan State, Gonzaga, Connecticut, Villanova, Florida, UCLA, and Syracuse. Most of these teams maintain high win ratios during the regular season, which translates to greater success in the NCAA tournament.
+
+This finding suggests that sustained excellence in the regular season is a key factor in determining deep tournament runs, further emphasizing the importance of consistency and strong program foundations.
+
+```{r , warning=FALSE , message=FALSE }
+ggplot(filtered_data, aes(x = rs_win_ratio, y = March_Madness_Games_Won)) +
+  geom_point(aes(color = Team_ID)) +  
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  
+  labs(
+    title = "March Madness Games Won vs. Regular Season Win Ratio from 2003 - 2023",
+    x = "Regular Season Win Ratio",
+    y = "March Madness Games Won"
+  ) +
+  theme_minimal() 
+```
+
+
+For the next phase of our research, we analyzed score differences across seasons and found no noticeable variation in their distribution. Histograms for both March Madness and the regular season revealed a similar spread of score differences, indicating that the competitiveness of games remains relatively consistent across different seasons.
+
+The average score difference for March Madness games is approximately 11 points, while the median score difference is 10 points. This suggests that while some games result in larger margins, a typical game is decided by around 10 points.
+
+Additionally, our boxplots provide a visual comparison of winning and losing team scores. Winning teams consistently achieve higher scores than losing teams, with the distribution showing clear differences in score ranges. The color-coded representation emphasizes the separation in scoring patterns between winners and losers.
+
+Furthermore, our histograms of score differences for both March Madness and the regular season reinforce our findings. The distributions appear similar, with most games decided by moderate score differences, while extreme blowouts remain less frequent. This further supports the conclusion that the overall level of competition does not drastically change from season to season.
+
+These findings suggest that while the intensity and stakes may feel different between the regular season and March Madness, the statistical nature of score differences remains stable.
+
+
+```{r, warning=FALSE , message=FALSE }
+#Boxplot for winning and losing team
+ggplot(MNCAA, aes(x = "Win", y = WScore, fill = "Win")) +
+  geom_boxplot(alpha = 1, color = "black") +
+  geom_boxplot(data = MNCAA, aes(x = "Lose", y = LScore, fill = "Lose"), alpha = 1, color = "black") +
+  labs(
+    title = "Distribution of scores (MNCAA)",
+    x = "Team win/lose",
+    y = "Score"
+  ) +
+  scale_fill_manual(values = c("Win" = "blue", "Lose" = "red"))
+
+
+#Bar chart for average scores
+ggplot(average_scores, aes(x = Team, y = AverageScore, fill = Team)) +
+  geom_bar(stat = "identity", alpha = 1) +
+  labs(
+    title = "Win vs Lose",
+    x = "Team win/lose",
+    y = "Average score"
+  ) +
+    scale_fill_manual(values = c("Win" = "blue", "Lose" = "red"))
+
+#Histogram for distribution of scores
+ggplot(MNCAA, aes(x = ScoreDifference)) +
+  geom_histogram(binwidth = 5, fill = "blue", alpha = 1, color = "black") +
+  labs(
+    title = "Distribution of winning score differences (MNCAA)",
+    x = "Score differences",
+    y = "Games"
+  )
+
+ggplot(regular, aes(x = ScoreDifference)) +
+  geom_histogram(binwidth = 5, fill = "blue", alpha = 1, color = "black") +
+  labs(
+    title = "Distribution of winning score differences (regular season)",
+    x = "Score differences",
+    y = "Games"
+  )
+
+```
+
+For the third phase of our research, we explored the relationship between regular season win percentage and average March Madness win percentage. Our analysis confirmed that teams with higher regular season win percentages tend to perform better in March Madness. The p-value of < 2.2e-16 indicates that this relationship is statistically significant.
+
+The R-squared value of 0.1863 suggests that 18.63% of the variability in March Madness performance can be explained by regular season performance, meaning other factors also play a role in tournament success.
+
+The correlation coefficient of 0.432 indicates a moderate positive relationship between regular season win percentage and March Madness win percentage. As regular season win percentage increases, the average March Madness win percentage also tends to rise.
+
+We visualized this relationship with a smooth line, which shows that as the regular season win percentage increases, teams are more likely to have higher average March Madness win percentages. This trend clearly illustrates the positive correlation, suggesting that teams with strong regular seasons are more likely to perform well in the tournament.
+
+```{r , warning=FALSE , message=FALSE }
+ggplot(team_performance_summary, aes(x = WinPercentage_Binned, y = AvgTourneyWinPercentage)) +
+  geom_smooth(method = "loess", color = "#D55E00", size = 1.5, se = FALSE, span = 0.3) +
+  geom_point(color = "#0073C2", size = 2, alpha = 0.7) +
+  labs(
+    title = "Regular Season Win % vs. March Madness Win %",
+    subtitle = paste("Correlation:", round(correlation, 3)),
+    x = "Regular Season Win Percentage",
+    y = "Average March Madness Win Percentage"
+  ) +
+  theme_minimal()
+
+```
+
+For the fourth phase of our research, we analyzed the relationship between regular season and tournament free throw success rates. The scatter plot shows a positive correlation between the two, with teams that perform well at the free throw line during the regular season also showing success in March Madness.
+
+A linear regression line, shown in firebrick color, fits the data points and reinforces this positive relationship. This suggests that teams with higher free throw success rates in the regular season are more likely to maintain similar performance in the tournament.
+
+This correlation highlights the consistency of free throw performance across different phases of the season, indicating that teams who excel in free throws during the regular season are generally able to replicate that success in March Madness.
+
+
+```{r , warning=FALSE , message=FALSE }
+final %>% 
+  ggplot(aes(regular_ft_success_rate, tourney_ft_success_rate)) + 
+  geom_point(color = '#0b213f') +  # Add transparency and sizing
+  geom_smooth(method = "lm", se = FALSE, color = "firebrick", linewidth = 1) +
+  labs(
+    title = "Regular Season vs Tournament Free Throw Success Rates",
+    x = "Regular Season FT%",
+    y = "Tournament FT%",
+  ) + coord_cartesian(
+  )
+
+```
+
+
+### Findings
+
+The findings reveal that team performance tends to follow consistent trends over time, though there is always room for potential upsets. The dataset, sourced from Kaggle, is incomplete, and a direct NCAA dataset could enhance the analysis, providing more precise results. Despite this limitation, the calculated ratios are relatively accurate, with top-performing teams aligning with historical outcomes. Future research could focus on other regular season metrics, such as rebounds, steals, and assists, to better predict team performance and success.
+
+Regarding the comparison between regular season and March Madness scores, the data shows no notable difference in scores, indicating that player performance tends to remain similar across both phases. This consistency can help set expectations for new viewers, as they can anticipate similar score ranges for winning and losing teams. However, the dataset only covers games from 2003 to 2023, limiting the historical perspective. To improve the analysis, future studies could include data from earlier seasons, providing a more comprehensive view of long-term trends.
+
+In terms of tournament success, the analysis confirms that regular season performance correlates with success in the tournament. However, the data doesn’t account for external factors such as injuries, which could affect game outcomes. Expanding the research to consider coach strategies—such as a preference for defensive or fast-paced offense—could offer valuable insights into what contributes to more victories.
+
+Additionally, there is a noticeable correlation between free throws made in the regular season and those made during the tournament. This consistency suggests that a team’s free throw performance remains relatively stable across both phases, further reinforcing the reliability of regular season metrics in predicting tournament outcomes.
+
+
+### Summary
+
+The key takeaway from this research is that regular season performance serves as a reliable predictor of tournament success, with metrics like free throw accuracy proving to be particularly significant. This consistency in scoring across both the regular season and March Madness not only offers valuable insights for fans and analysts but also sets realistic expectations for team performance. However, the research does come with limitations, such as incomplete data and the omission of factors like injuries and coaching strategies, which could influence outcomes. These gaps highlight the need for further exploration into the external variables that might affect team performance in both the regular season and tournament play. Expanding the dataset and incorporating additional factors, such as player injuries, team chemistry, or coaching styles, could refine and deepen the understanding of the dynamics at play.
+
+In terms of broader implications, the findings from this study hold potential for extending beyond NCAA men’s basketball. Analyzing high school basketball, women’s college basketball, and the NBA through similar lenses could yield fascinating insights into how performance trends and predictive metrics play out across different levels of the sport. High school basketball, with its varied competition levels, could benefit from understanding which regular season performance factors translate most effectively to tournament success. Similarly, women's college basketball, which has its own unique competitive environment and playing style, could be analyzed to identify gender-specific trends or confirm whether the patterns observed in the men’s game hold true across both genders. The NBA, being a professional league with more standardized training and player development, could offer a more refined lens for exploring the impact of external factors like player injuries, coaching strategies, and advanced statistics (e.g., player efficiency ratings, usage rates, etc.) on performance consistency.
+
+Furthermore, this research could help in developing predictive models for these other levels of basketball. By understanding how specific metrics influence outcomes in college basketball, it may be possible to tailor these insights for high school programs, women's leagues, or the NBA, enhancing scouting, recruiting, and team strategy at all levels. Coaches and analysts across various tiers could use these findings to improve training regimens, refine strategies, and set more precise expectations for players. Ultimately, this study lays a foundation for a more holistic, multi-tiered understanding of basketball performance that could have far-reaching implications for the sport as a whole.
+
